@@ -1,0 +1,40 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: vllm
+spec:
+  predictor:
+    serviceAccountName: s3-read-only
+    containers:
+      - args:
+          - --trust-remote-code
+          - --port
+          - "8080"
+          - --model
+          - /mnt/models
+          - --dtype
+          - bfloat16
+          - --host
+          - 0.0.0.0
+          - --chat-template 
+          - /work/template_alpaca_m.jinja
+          - --max-model-len
+          - "512"
+        command:
+          - python3
+          - -m
+          - vllm.entrypoints.api_server
+        env:
+          - name: STORAGE_URI
+            value: s3://emlos26/model
+        image: ainoob/ksvllm:latest
+        name: kserve-container
+        resources:
+          requests:
+            cpu: "5"
+            memory: 20Gi
+            nvidia.com/gpu: "1"
+          limits:
+            cpu: "5"
+            memory: 22Gi
+            nvidia.com/gpu: "1"
